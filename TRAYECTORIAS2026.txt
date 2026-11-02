@@ -9,28 +9,42 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// ══════════════════════════════════════════════
-// 🔴 REEMPLAZÁ CON EL firebaseConfig DE LA ESCUELA
-// ══════════════════════════════════════════════
 const firebaseConfig = {
-  apiKey: "AIzaSyDaRoJJPcTP6a9SYtgwk8_K9xvG6SyN6iA",
-  authDomain: "escuela-nombre.firebaseapp.com",
-  projectId: "escuela-nombre",
-  storageBucket: "escuela-nombre.firebasestorage.app",
-  messagingSenderId: "546235938225",
-  appId: "1:546235938225:web:1ed6649025256d00e5b990"
+  apiKey: "AIzaSyBPTZRIX268BumsuXXD6DIE0CpaC9_z6dE",
+  authDomain: "trayectorias-cuidadas-2026.firebaseapp.com",
+  projectId: "trayectorias-cuidadas-2026",
+  storageBucket: "trayectorias-cuidadas-2026.firebasestorage.app",
+  messagingSenderId: "171635810337",
+  appId: "1:171635810337:web:eb3df6a74d47ee6bd3c360"
 };
-// ══════════════════════════════════════════════
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Ingreso anónimo: se hace una vez y todas las lecturas/escrituras esperan a que termine
+const authListo = signInAnonymously(auth).catch(e => {
+  console.error("Auth anónima falló:", e);
+  throw e;
+});
+
 window.dbGet = async (key) => {
-  try { const snap = await getDoc(doc(db,"mapeo",key)); return snap.exists()?snap.data().value:null; }
-  catch(e){ return null; }
+  try {
+    await authListo;
+    const snap = await getDoc(doc(db,"mapeo",key));
+    return snap.exists()?snap.data().value:null;
+  } catch(e){ console.error("Error al leer:", e); return null; }
 };
 window.dbSet = async (key,value) => {
-  try { await setDoc(doc(db,"mapeo",key),{value}); } catch(e){}
+  try {
+    await authListo;
+    await setDoc(doc(db,"mapeo",key),{value});
+  } catch(e){
+    console.error("Error al guardar:", e);
+    alert("No se pudo guardar. Revisá la conexión e intentá de nuevo.");
+  }
 };
 window.firebaseReady = true;
 document.dispatchEvent(new Event("firebaseReady"));
